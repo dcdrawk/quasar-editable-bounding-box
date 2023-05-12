@@ -5,7 +5,7 @@
     </h5>
     <div
       ref="control"
-      v-touch-pan.prevent.mouse="handlePan"
+      v-touch-pan.prevent.capture.mouse="handlePan"
       class="relative-position"
     >
       <q-img
