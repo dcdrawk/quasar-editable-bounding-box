@@ -17,10 +17,17 @@ interface Props {
 
 const props = withDefaults(defineProps<Props>(), {})
 
+const dimensions = computed(() => ({
+  width: Math.abs(props.width),
+  height: Math.abs(props.height),
+  scaleX: props.width > 0 ? 1 : -1,
+  scaleY: props.height > 0 ? 1 : -1
+}))
+
 const boundingBoxStyle = computed(() => ({
-  width: `${props.width}px`,
-  height: `${props.height}px`,
-  transform: `translate(${props.x}px, ${props.y}px)`
+  width: `${dimensions.value.width}px`,
+  height: `${dimensions.value.height}px`,
+  transform: `translate(${props.x}px, ${props.y}px) scaleX(${dimensions.value.scaleX}) scaleY(${dimensions.value.scaleY})`
 }))
 </script>
 
@@ -28,5 +35,6 @@ const boundingBoxStyle = computed(() => ({
 .bounding-box {
   border: 2px solid red;
   pointer-events: none;
+  transform-origin: 0 0;
 }
 </style>
