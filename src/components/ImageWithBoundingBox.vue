@@ -6,7 +6,7 @@
     <div
       ref="control"
       v-touch-pan.prevent.capture.mouse="handlePan"
-      class="relative-position"
+      class="relative-position overflow-hidden"
     >
       <q-img
         class="bounding-image"
