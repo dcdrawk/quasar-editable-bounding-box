@@ -1,13 +1,12 @@
 <template>
   <div class="full-width q-pa-md">
     <h5 class="q-mb-none q-mt-sm">
-      Image with Bounding Boxes {{ relativePointerCoordinates }} {{ boundingBoxDimensions }}
+      Image with Bounding Boxes {{ relativePointerCoordinates }}
     </h5>
     <div
       ref="control"
+      v-touch-pan.prevent.mouse="handlePan"
       class="relative-position"
-      @mousedown="handleDragStart"
-      @mouseup="handleDragEnd"
     >
       <q-img
         class="bounding-image"
@@ -39,6 +38,11 @@ const boundingBoxCoordinates = reactive({
   y: 0
 })
 
+const boundingBoxDimensions = reactive({
+  width: 0,
+  height: 0
+})
+
 const { x: pointerX, y: pointerY } = useMouse()
 
 const relativePointerCoordinates = computed(() => {
@@ -52,22 +56,19 @@ const relativePointerCoordinates = computed(() => {
   }
 })
 
-const boundingBoxDimensions = computed(() => {
-  return {
-    width: relativePointerCoordinates.value.x - boundingBoxCoordinates.x,
-    height: relativePointerCoordinates.value.y - boundingBoxCoordinates.y,
-    flipX: relativePointerCoordinates.value.x - boundingBoxCoordinates.x < 0
+function handlePan ({ ...newInfo }) {
+  if (newInfo.isFirst) {
+    boundingBoxCoordinates.x = relativePointerCoordinates.value.x
+    boundingBoxCoordinates.y = relativePointerCoordinates.value.y
+    boundingBoxVisible.value = true
+  } else if (newInfo.isFinal) {
+    boundingBoxVisible.value = false
+    boundingBoxDimensions.width = 0
+    boundingBoxDimensions.height = 0
+  } else {
+    boundingBoxDimensions.width = newInfo.offset.x
+    boundingBoxDimensions.height = newInfo.offset.y
   }
-})
-
-function handleDragStart () {
-  boundingBoxCoordinates.x = relativePointerCoordinates.value.x
-  boundingBoxCoordinates.y = relativePointerCoordinates.value.y
-  boundingBoxVisible.value = true
-}
-
-function handleDragEnd () {
-  boundingBoxVisible.value = false
 }
 </script>
 
