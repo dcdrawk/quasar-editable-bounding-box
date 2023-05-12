@@ -20,12 +20,13 @@ const props = withDefaults(defineProps<Props>(), {})
 const boundingBoxStyle = computed(() => ({
   width: `${props.width}px`,
   height: `${props.height}px`,
-  transform: `translate(${props.x}, ${props.y})`
+  transform: `translate(${props.x}px, ${props.y}px)`
 }))
 </script>
 
 <style scoped>
 .bounding-box {
   border: 2px solid red;
+  pointer-events: none;
 }
 </style>
