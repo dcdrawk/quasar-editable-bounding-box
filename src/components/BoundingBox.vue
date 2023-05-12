@@ -20,8 +20,8 @@ const props = withDefaults(defineProps<Props>(), {})
 const dimensions = computed(() => ({
   width: Math.abs(props.width),
   height: Math.abs(props.height),
-  scaleX: props.width > 0 ? 1 : -1,
-  scaleY: props.height > 0 ? 1 : -1
+  scaleX: props.width >= 0 ? 1 : -1,
+  scaleY: props.height >= 0 ? 1 : -1
 }))
 
 const boundingBoxStyle = computed(() => ({
@@ -33,7 +33,7 @@ const boundingBoxStyle = computed(() => ({
 
 <style scoped>
 .bounding-box {
-  border: 2px solid red;
+  outline: 2px solid red;
   pointer-events: none;
   transform-origin: 0 0;
 }
