@@ -1,17 +1,20 @@
 <template>
   <q-page class="row items-center justify-evenly">
-    <example-component
+    <!-- <ExampleComponent
       title="Example component"
       active
       :todos="todos"
       :meta="meta"
-    />
+    /> -->
+
+    <ImageWithBoundingBox />
   </q-page>
 </template>
 
 <script setup lang="ts">
 import { Todo, Meta } from 'components/models'
 import ExampleComponent from 'components/ExampleComponent.vue'
+import ImageWithBoundingBox from 'components/ImageWithBoundingBox.vue'
 import { ref } from 'vue'
 
 const todos = ref<Todo[]>([
