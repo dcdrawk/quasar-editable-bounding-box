@@ -4,6 +4,8 @@
       ref="control"
       v-touch-pan.prevent.capture.mouse="handlePan"
       class="relative-position overflow-hidden"
+      @mousemove="handleMouseMove"
+      @mouseup="isResizing = false"
     >
       <q-img
         class="bounding-image"
@@ -29,13 +31,15 @@
         :width="box.width"
         :height="box.height"
         @remove="removeBoundingBox(index)"
+        @resize-start="handleResize($event, box)"
+        @resize-end="isResizing = false"
       />
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed } from 'vue'
+import { ref, reactive, computed, toValue } from 'vue'
 import BoundingBox from './BoundingBox.vue'
 import { useMouse, useWindowScroll } from '@vueuse/core'
 
@@ -134,6 +138,42 @@ function pushBoundingBox (box: IBoundingBox) {
 
 function removeBoundingBox (index: number) {
   boundingBoxes.value.splice(index, 1)
+}
+
+const isResizing = ref(false)
+const resizePosition = ref('')
+const resizeBox = ref()
+
+function handleResize (position: unknown, box: IBoundingBox) {
+  isResizing.value = true
+  resizePosition.value = position as string
+  resizeBox.value = box
+}
+
+function handleMouseMove () {
+  if (!isResizing.value) return
+
+  const originalY = toValue(resizeBox.value.y)
+  const originalX = toValue(resizeBox.value.x)
+  const diffY = originalY - relativePointerCoordinates.value.y
+  const diffX = originalX - relativePointerCoordinates.value.x
+
+  switch (resizePosition.value) {
+    case ('right'):
+      resizeBox.value.width = relativePointerCoordinates.value.x - resizeBox.value.x
+      break
+    case ('top'):
+      resizeBox.value.y = relativePointerCoordinates.value.y
+      resizeBox.value.height = resizeBox.value.height + diffY
+      break
+    case ('left'):
+      resizeBox.value.x = relativePointerCoordinates.value.x
+      resizeBox.value.width = resizeBox.value.width + diffX
+      break
+    case ('bottom'):
+      resizeBox.value.height = relativePointerCoordinates.value.y - resizeBox.value.y
+      break
+  }
 }
 </script>
 
