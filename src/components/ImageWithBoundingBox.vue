@@ -10,6 +10,8 @@
         :draggable="false"
         src="/img/example-james-webb-photo.jpg"
       />
+
+      <!-- New Bounding Box -->
       <BoundingBox
         v-if="boundingBoxVisible"
         :x="boundingBoxInfo.x"
@@ -17,15 +19,31 @@
         :width="boundingBoxInfo.width"
         :height="boundingBoxInfo.height"
       />
+
+      <!-- List of Bounding boxes-->
+      <BoundingBox
+        v-for="(box, index) in boundingBoxes"
+        :key="index"
+        :x="box.x"
+        :y="box.y"
+        :width="box.width"
+        :height="box.height"
+      />
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed } from 'vue'
+import { ref, reactive, computed, toValue } from 'vue'
 import BoundingBox from './BoundingBox.vue'
 import { useMouse, useWindowScroll } from '@vueuse/core'
 
+interface IBoundingBox {
+  x: number
+  y: number
+  width: number
+  height: number
+}
 /**
  * Is the bounding box visible?
  */
@@ -34,7 +52,7 @@ const boundingBoxVisible = ref(false)
 /**
  * Info used to draw new bounding boxes
  */
-const boundingBoxInfo = reactive({
+const boundingBoxInfo = reactive<IBoundingBox>({
   x: 0,
   y: 0,
   width: 0,
@@ -56,17 +74,6 @@ const scrollYStart = ref(0)
 const scrollXStart = ref(0)
 const scrollXDiff = computed(() => scrollX.value - scrollXStart.value)
 const scrollYDiff = computed(() => scrollY.value - scrollYStart.value)
-
-const tempBoxInfo = reactive({
-  scrollX: 0,
-  scrollY: 0,
-  width: 0,
-  height: 0,
-  x: 0,
-  y: 0
-})
-
-const scrolledLast = ref(false)
 
 /**
  * Pointer coordinates relative to control element
@@ -100,11 +107,6 @@ function setScrollStart (x: number, y: number) {
  * otherwise update with width / height of the box based on offset coordinates
  */
 function handlePan ({ ...newInfo }) {
-  if (scrolledLast.value) {
-    scrollXStart.value = tempBoxInfo.scrollX
-    scrollYStart.value = tempBoxInfo.scrollY
-  }
-
   if (newInfo.isFirst) {
     setScrollStart(scrollX.value, scrollY.value)
 
@@ -112,15 +114,21 @@ function handlePan ({ ...newInfo }) {
     boundingBoxInfo.y = relativePointerCoordinates.value.y
     boundingBoxVisible.value = true
   } else if (newInfo.isFinal) {
+    pushBoundingBox(boundingBoxInfo)
     boundingBoxVisible.value = false
     boundingBoxInfo.width = 0
     boundingBoxInfo.height = 0
-    scrolledLast.value = false
     setScrollStart(0, 0)
   } else {
     boundingBoxInfo.width = newInfo.offset.x + scrollXDiff.value
     boundingBoxInfo.height = newInfo.offset.y + scrollYDiff.value
   }
+}
+
+const boundingBoxes = ref<IBoundingBox[]>([])
+
+function pushBoundingBox (boundingBox: IBoundingBox) {
+  boundingBoxes.value.push({ ...boundingBox })
 }
 </script>
 
