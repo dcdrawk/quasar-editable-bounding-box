@@ -23,18 +23,19 @@
       <!-- List of Bounding boxes-->
       <BoundingBox
         v-for="(box, index) in boundingBoxes"
-        :key="index"
+        :key="`${index}${box.x}{box.y}`"
         :x="box.x"
         :y="box.y"
         :width="box.width"
         :height="box.height"
+        @remove="removeBoundingBox(index)"
       />
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, toValue } from 'vue'
+import { ref, reactive, computed } from 'vue'
 import BoundingBox from './BoundingBox.vue'
 import { useMouse, useWindowScroll } from '@vueuse/core'
 
@@ -127,8 +128,12 @@ function handlePan ({ ...newInfo }) {
 
 const boundingBoxes = ref<IBoundingBox[]>([])
 
-function pushBoundingBox (boundingBox: IBoundingBox) {
-  boundingBoxes.value.push({ ...boundingBox })
+function pushBoundingBox (box: IBoundingBox) {
+  boundingBoxes.value.push({ ...box })
+}
+
+function removeBoundingBox (index: number) {
+  boundingBoxes.value.splice(index, 1)
 }
 </script>
 
