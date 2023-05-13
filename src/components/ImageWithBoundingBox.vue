@@ -1,8 +1,5 @@
 <template>
   <div class="full-width q-pa-md">
-    <h5 class="q-mb-none q-mt-sm">
-      Image with Bounding Boxes {{ relativePointerCoordinates }}
-    </h5>
     <div
       ref="control"
       v-touch-pan.prevent.capture.mouse="handlePan"
@@ -15,10 +12,10 @@
       />
       <BoundingBox
         v-if="boundingBoxVisible"
-        :x="boundingBoxCoordinates.x"
-        :y="boundingBoxCoordinates.y"
-        :width="boundingBoxDimensions.width"
-        :height="boundingBoxDimensions.height"
+        :x="boundingBoxInfo.x"
+        :y="boundingBoxInfo.y"
+        :width="boundingBoxInfo.width"
+        :height="boundingBoxInfo.height"
       />
     </div>
   </div>
@@ -27,47 +24,102 @@
 <script setup lang="ts">
 import { ref, reactive, computed } from 'vue'
 import BoundingBox from './BoundingBox.vue'
-import { useMouse } from '@vueuse/core'
+import { useMouse, useWindowScroll } from '@vueuse/core'
 
-const control = ref()
-
+/**
+ * Is the bounding box visible?
+ */
 const boundingBoxVisible = ref(false)
 
-const boundingBoxCoordinates = reactive({
+/**
+ * Info used to draw new bounding boxes
+ */
+const boundingBoxInfo = reactive({
   x: 0,
-  y: 0
-})
-
-const boundingBoxDimensions = reactive({
+  y: 0,
   width: 0,
   height: 0
 })
 
-const { x: pointerX, y: pointerY } = useMouse()
+/**
+ * Control container template ref
+ */
+const control = ref()
 
+/**
+ * Pointer and Scroll Coordinates
+ * See: https://vueuse.org/core/useMouse/
+ */
+const { x: pointerX, y: pointerY } = useMouse()
+const { x: scrollX, y: scrollY } = useWindowScroll()
+const scrollYStart = ref(0)
+const scrollXStart = ref(0)
+const scrollXDiff = computed(() => scrollX.value - scrollXStart.value)
+const scrollYDiff = computed(() => scrollY.value - scrollYStart.value)
+
+const tempBoxInfo = reactive({
+  scrollX: 0,
+  scrollY: 0,
+  width: 0,
+  height: 0,
+  x: 0,
+  y: 0
+})
+
+const scrolledLast = ref(false)
+
+/**
+ * Pointer coordinates relative to control element
+ */
 const relativePointerCoordinates = computed(() => {
   if (!control.value) return { x: 0, y: 0 }
 
   const box = control.value.getBoundingClientRect()
 
   return {
-    x: pointerX.value - box.left,
-    y: pointerY.value - box.top
+    x: pointerX.value - box.left - scrollX.value + scrollXDiff.value,
+    y: pointerY.value - box.top - scrollY.value + scrollYDiff.value
   }
 })
 
+/**
+ * Set Scroll Start
+ * @desc set the scroll position when starting a bounding box
+ * @param x: number
+ * @param y: number
+ */
+function setScrollStart (x: number, y: number) {
+  scrollXStart.value = x
+  scrollYStart.value = y
+}
+
+/**
+ * Handle Pan
+ * @desc when the pan starts, set the x / y coordinates,
+ * if the pan is final, reset the bounding box,
+ * otherwise update with width / height of the box based on offset coordinates
+ */
 function handlePan ({ ...newInfo }) {
+  if (scrolledLast.value) {
+    scrollXStart.value = tempBoxInfo.scrollX
+    scrollYStart.value = tempBoxInfo.scrollY
+  }
+
   if (newInfo.isFirst) {
-    boundingBoxCoordinates.x = relativePointerCoordinates.value.x
-    boundingBoxCoordinates.y = relativePointerCoordinates.value.y
+    setScrollStart(scrollX.value, scrollY.value)
+
+    boundingBoxInfo.x = relativePointerCoordinates.value.x
+    boundingBoxInfo.y = relativePointerCoordinates.value.y
     boundingBoxVisible.value = true
   } else if (newInfo.isFinal) {
     boundingBoxVisible.value = false
-    boundingBoxDimensions.width = 0
-    boundingBoxDimensions.height = 0
+    boundingBoxInfo.width = 0
+    boundingBoxInfo.height = 0
+    scrolledLast.value = false
+    setScrollStart(0, 0)
   } else {
-    boundingBoxDimensions.width = newInfo.offset.x
-    boundingBoxDimensions.height = newInfo.offset.y
+    boundingBoxInfo.width = newInfo.offset.x + scrollXDiff.value
+    boundingBoxInfo.height = newInfo.offset.y + scrollYDiff.value
   }
 }
 </script>
@@ -75,5 +127,6 @@ function handlePan ({ ...newInfo }) {
 <style scoped lang="scss">
 .bounding-image {
   user-select: none;
+  width: 1200px;
 }
 </style>

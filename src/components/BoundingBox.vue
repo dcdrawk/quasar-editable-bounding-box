@@ -17,6 +17,9 @@ interface Props {
 
 const props = withDefaults(defineProps<Props>(), {})
 
+/**
+ * Bounding box dimensions
+ */
 const dimensions = computed(() => ({
   width: Math.abs(props.width),
   height: Math.abs(props.height),
@@ -24,6 +27,9 @@ const dimensions = computed(() => ({
   scaleY: props.height >= 0 ? 1 : -1
 }))
 
+/**
+ * Bounding box style
+ */
 const boundingBoxStyle = computed(() => ({
   width: `${dimensions.value.width}px`,
   height: `${dimensions.value.height}px`,
