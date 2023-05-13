@@ -9,9 +9,19 @@
         :style="removeStyle"
         @click="$emit('remove')"
       >
-        <!-- <q-icon name="fas fa-flag" /> -->
         <q-icon :name="fasTimes" />
       </div>
+
+      <div
+        v-for="(point, index) in resizePoints"
+        :key="index"
+        draggable="true"
+        class="bounding-box__resize"
+        :class="point.class"
+        :style="point.style"
+        @mousedown.prevent.stop="$emit('resize-start', point.position)"
+        @mouseup.prevent.stop="$emit('resize-end')"
+      />
     </div>
   </div>
 </template>
@@ -23,6 +33,8 @@ import { colors } from 'quasar'
 
 defineEmits<{
   (e: 'remove'): void
+  (e: 'resize-start'): string
+  (e: 'resize-end'): void
 }>()
 
 interface Props {
@@ -36,6 +48,7 @@ const props = withDefaults(defineProps<Props>(), {})
 
 const flipX = computed(() => props.width < 0)
 const flipY = computed(() => props.height < 0)
+
 /**
  * Bounding box dimensions
  */
@@ -71,6 +84,39 @@ const removeStyle = computed(() => ({
   borderTopRightRadius: flipY.value ? '0' : '4px',
   borderTopLeftRadius: flipY.value ? '0' : '4px'
 }))
+
+/**
+ * Resize points
+ */
+const resizePoints = [{
+  position: 'top-left',
+  style: { top: '-10px', left: '-10px' }
+}, {
+  position: 'top',
+  style: { top: '0px' },
+  class: 'absolute-center'
+}, {
+  position: 'top-right',
+  style: { top: '-10px', right: '-10px' }
+}, {
+  position: 'right',
+  style: { right: '-20px', left: 'auto' },
+  class: 'absolute-center'
+}, {
+  position: 'bottom-right',
+  style: { right: '-10px', bottom: '-10px' }
+}, {
+  position: 'bottom',
+  style: { bottom: '-20px', top: 'auto' },
+  class: 'absolute-center'
+}, {
+  position: 'bottom-left',
+  style: { left: '-10px', bottom: '-10px' }
+}, {
+  position: 'left',
+  style: { left: '0', right: 'auto' },
+  class: 'absolute-center'
+}]
 </script>
 
 <style scoped lang="scss">
@@ -88,9 +134,21 @@ const removeStyle = computed(() => ({
     transition: opacity 150ms ease;
   }
 
+  &__resize {
+    position: absolute;
+    cursor: grab;
+    width: 20px;
+    height: 20px;
+    border-radius: 100%;
+    background-color: $red-6;
+    opacity: 0;
+    transition: opacity 150ms ease;
+  }
+
   &:hover {
-    .bounding-box__remove {
-      opacity: 1 !important;
+    .bounding-box__remove,
+    .bounding-box__resize {
+      opacity: 1;
     }
   }
 }
