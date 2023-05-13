@@ -17,7 +17,7 @@
         :key="index"
         draggable="true"
         class="bounding-box__resize"
-        :class="point.class"
+        :class="[point.class, resizeClass]"
         :style="point.style"
         @mousedown.prevent.stop="$emit('resize-start', point.position)"
         @mouseup.prevent.stop="$emit('resize-end')"
@@ -42,9 +42,12 @@ interface Props {
   height: number
   x: number
   y: number
+  edit?: boolean
 }
 
-const props = withDefaults(defineProps<Props>(), {})
+const props = withDefaults(defineProps<Props>(), {
+  edit: false
+})
 
 const flipX = computed(() => props.width < 0)
 const flipY = computed(() => props.height < 0)
@@ -83,6 +86,14 @@ const removeStyle = computed(() => ({
   borderBottomLeftRadius: flipY.value ? '4px' : '0',
   borderTopRightRadius: flipY.value ? '0' : '4px',
   borderTopLeftRadius: flipY.value ? '0' : '4px'
+}))
+
+/**
+ * Resize styles
+ * Ensures that the resize circles are visible while resizing
+ */
+const resizeClass = computed(() => ({
+  'bounding-box__resize--visible': props.edit
 }))
 
 /**
@@ -143,6 +154,10 @@ const resizePoints = [{
     background-color: $red-6;
     opacity: 0;
     transition: opacity 150ms ease;
+
+    &--visible {
+      opacity: 1;
+    }
   }
 
   &:hover {

@@ -5,10 +5,10 @@
       v-touch-pan.prevent.capture.mouse="handlePan"
       class="relative-position overflow-hidden"
       @mousemove="handleMouseMove"
-      @mouseup="isResizing = false"
+      @mouseup="handleResizeEnd"
     >
       <q-img
-        class="bounding-image"
+        class="bounding-image full-width"
         :draggable="false"
         src="/img/example-james-webb-photo.jpg"
       />
@@ -30,9 +30,10 @@
         :y="box.y"
         :width="box.width"
         :height="box.height"
+        :edit="box.isEditing"
         @remove="removeBoundingBox(index)"
         @resize-start="handleResize($event, box)"
-        @resize-end="isResizing = false"
+        @resize-end="handleResizeEnd"
       />
     </div>
   </div>
@@ -48,6 +49,7 @@ interface IBoundingBox {
   y: number
   width: number
   height: number
+  isEditing: boolean
 }
 /**
  * Is the bounding box visible?
@@ -61,7 +63,8 @@ const boundingBoxInfo = reactive<IBoundingBox>({
   x: 0,
   y: 0,
   width: 0,
-  height: 0
+  height: 0,
+  isEditing: false
 })
 
 /**
@@ -143,35 +146,77 @@ function removeBoundingBox (index: number) {
 const isResizing = ref(false)
 const resizePosition = ref('')
 const resizeBox = ref()
+const resizeDiffX = computed(() => resizeBox.value.x - relativePointerCoordinates.value.x)
+const resizeDiffY = computed(() => resizeBox.value.y - relativePointerCoordinates.value.y)
 
 function handleResize (position: unknown, box: IBoundingBox) {
   isResizing.value = true
   resizePosition.value = position as string
   resizeBox.value = box
+  resizeBox.value.isEditing = true
+}
+
+function handleResizeEnd () {
+  isResizing.value = false
+  resizeBox.value.isEditing = false
+}
+
+function resizeLeft () {
+  resizeBox.value.width = resizeBox.value.width + resizeDiffX.value
+  resizeBox.value.x = relativePointerCoordinates.value.x
+}
+
+function resizeTop () {
+  resizeBox.value.height = resizeBox.value.height + resizeDiffY.value
+  resizeBox.value.y = relativePointerCoordinates.value.y
+}
+
+function resizeRight () {
+  resizeBox.value.width = relativePointerCoordinates.value.x - resizeBox.value.x
+}
+
+function resizeBottom () {
+  resizeBox.value.height = relativePointerCoordinates.value.y - resizeBox.value.y
 }
 
 function handleMouseMove () {
   if (!isResizing.value) return
 
-  const originalY = toValue(resizeBox.value.y)
-  const originalX = toValue(resizeBox.value.x)
-  const diffY = originalY - relativePointerCoordinates.value.y
-  const diffX = originalX - relativePointerCoordinates.value.x
-
   switch (resizePosition.value) {
-    case ('right'):
-      resizeBox.value.width = relativePointerCoordinates.value.x - resizeBox.value.x
-      break
-    case ('top'):
-      resizeBox.value.y = relativePointerCoordinates.value.y
-      resizeBox.value.height = resizeBox.value.height + diffY
-      break
     case ('left'):
-      resizeBox.value.x = relativePointerCoordinates.value.x
-      resizeBox.value.width = resizeBox.value.width + diffX
+      resizeLeft()
       break
+
+    case ('top-left'):
+      resizeTop()
+      resizeLeft()
+      break
+
+    case ('top'):
+      resizeTop()
+      break
+
+    case ('top-right'):
+      resizeTop()
+      resizeRight()
+      break
+
+    case ('right'):
+      resizeRight()
+      break
+
+    case ('bottom-right'):
+      resizeBottom()
+      resizeRight()
+      break
+
     case ('bottom'):
-      resizeBox.value.height = relativePointerCoordinates.value.y - resizeBox.value.y
+      resizeBottom()
+      break
+
+    case ('bottom-left'):
+      resizeBottom()
+      resizeLeft()
       break
   }
 }
