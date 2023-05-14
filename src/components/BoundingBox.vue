@@ -8,6 +8,7 @@
         class="bounding-box__remove q-pa-sm flex justify-center items-center"
         :style="removeStyle"
         @click="$emit('remove')"
+        @touchstart="$emit('remove')"
       >
         <q-icon :name="fasTimes" />
       </div>
@@ -15,12 +16,11 @@
       <div
         v-for="(point, index) in resizePoints"
         :key="index"
-        draggable="true"
         class="bounding-box__resize"
-        :class="[point.class, resizeClass]"
-        :style="point.style"
-        @mousedown.prevent.stop="$emit('resize-start', point.position)"
-        @mouseup.prevent.stop="$emit('resize-end')"
+        :class="[`bounding-box__resize--${point} `, resizeClass]"
+        :style="point"
+        @mousedown.stop.prevent="$emit('resize-start', { event: $event, position: point })"
+        @touchstart.stop.prevent="$emit('resize-start', { event: $event, position: point })"
       />
     </div>
   </div>
@@ -30,10 +30,11 @@
 import { fasTimes } from '@quasar/extras/fontawesome-v5'
 import { computed } from 'vue'
 import { colors } from 'quasar'
+import { IResizeEvent } from 'src/env'
 
 defineEmits<{
   (e: 'remove'): void
-  (e: 'resize-start'): string
+  (e: 'resize-start', event: IResizeEvent): void
   (e: 'resize-end'): void
 }>()
 
@@ -99,38 +100,20 @@ const resizeClass = computed(() => ({
 /**
  * Resize points
  */
-const resizePoints = [{
-  position: 'top-left',
-  style: { top: '-10px', left: '-10px' }
-}, {
-  position: 'top',
-  style: { top: '0px' },
-  class: 'absolute-center'
-}, {
-  position: 'top-right',
-  style: { top: '-10px', right: '-10px' }
-}, {
-  position: 'right',
-  style: { right: '-20px', left: 'auto' },
-  class: 'absolute-center'
-}, {
-  position: 'bottom-right',
-  style: { right: '-10px', bottom: '-10px' }
-}, {
-  position: 'bottom',
-  style: { bottom: '-20px', top: 'auto' },
-  class: 'absolute-center'
-}, {
-  position: 'bottom-left',
-  style: { left: '-10px', bottom: '-10px' }
-}, {
-  position: 'left',
-  style: { left: '0', right: 'auto' },
-  class: 'absolute-center'
-}]
+const resizePoints = [
+  'top-left',
+  'top',
+  'top-right',
+  'right',
+  'bottom-right',
+  'bottom',
+  'bottom-left',
+  'left'
+]
 </script>
 
 <style scoped lang="scss">
+
 .bounding-box {
   outline: 2px solid $red-6;
   transform-origin: 0 0;
@@ -141,22 +124,65 @@ const resizePoints = [{
     cursor: pointer;
     width: 40px;
     height: 40px;
-    opacity: 0;
     transition: opacity 150ms ease;
   }
 
   &__resize {
     position: absolute;
-    cursor: grab;
-    width: 20px;
-    height: 20px;
-    border-radius: 100%;
+    width: 10px;
+    height: 10px;
     background-color: $red-6;
-    opacity: 0;
     transition: opacity 150ms ease;
+    cursor: pointer;
 
     &--visible {
       opacity: 1;
+    }
+
+    $transformDistance: -5px;
+
+    &--top-left {
+      top: $transformDistance;
+      left: $transformDistance;
+    }
+
+    &--top {
+      top: $transformDistance;
+      left: 50%;
+      transform: translateX(-50%);
+    }
+
+    &--top-right {
+      top: $transformDistance;
+      right: $transformDistance;
+    }
+
+    &--right {
+      top: 50%;
+      right: $transformDistance;
+      transform: translateY(-50%);
+    }
+
+    &--bottom-right {
+      bottom: $transformDistance;
+      right: $transformDistance;
+    }
+
+    &--bottom {
+      bottom: $transformDistance;
+      left: 50%;
+      transform: translateX(-50%);
+    }
+
+    &--bottom-left {
+      bottom: $transformDistance;
+      left: $transformDistance;
+    }
+
+    &--left {
+      top: 50%;
+      left: $transformDistance;
+      transform: translateY(-50%);
     }
   }
 
