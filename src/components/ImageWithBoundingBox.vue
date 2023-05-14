@@ -1,5 +1,61 @@
 <template>
   <div class="full-width q-pa-md">
+    <div>
+      <h6 class="q-my-sm">
+        Image with Bounding Box Example {{ boxHasRoundedPoints }}
+      </h6>
+      <p>
+        Click and drag to create a bounding box. Drag the control points to resize.
+        Only one box can exist at a time, remove a box with the 'X' to create a new one
+      </p>
+
+      <div class="settings">
+        <h6 class="q-my-sm">
+          Bounding Box Settings
+        </h6>
+        <div class="settings__controls">
+          <q-select
+            v-model="boxSettingsColor"
+            class="q-mb-sm"
+            filled
+            :options="colorOptions"
+            emit-value
+            map-options
+            label="Color"
+          >
+            <template #prepend>
+              <q-icon
+                name="circle"
+                :color="boxSettingsColor"
+              />
+            </template>
+
+            <template #option="scope">
+              <q-item v-bind="scope.itemProps">
+                <q-item-section avatar>
+                  <q-icon
+                    name="circle"
+                    :color="scope.opt.value"
+                  />
+                </q-item-section>
+                <q-item-section>
+                  <q-item-label>{{ scope.opt.label }}</q-item-label>
+                </q-item-section>
+              </q-item>
+            </template>
+          </q-select>
+
+          <q-select
+            v-model="boxSettingsPointStyle"
+            class="q-mb-sm"
+            filled
+            :options="pointOptions"
+            label="Point Style"
+          />
+        </div>
+      </div>
+    </div>
+
     <div
       ref="control"
       class="relative-position overflow-hidden"
@@ -20,6 +76,9 @@
         :y="boundingBoxInfo.y"
         :width="boundingBoxInfo.width"
         :height="boundingBoxInfo.height"
+        :color="boxSettingsColor"
+        :rounded="boxHasRoundedPoints"
+        :edit="!!resizePosition"
         @resize-start="startResizing"
         @remove="boundingBoxVisible = false"
       />
@@ -45,6 +104,28 @@ interface IBoundingBox {
  * Is the bounding box visible?
  */
 const boundingBoxVisible = ref(false)
+
+/**
+ * Bounding Box Color settings
+ */
+const boxSettingsColor = ref('red-6')
+const colorOptions = [
+  { label: 'Red', value: 'red-6' },
+  { label: 'Purple', value: 'purple-4' },
+  { label: 'Blue', value: 'blue-6' },
+  { label: 'Cyan', value: 'cyan-6' },
+  { label: 'Green', value: 'green-6' },
+  { label: 'Yellow', value: 'yellow-6' },
+  { label: 'Orange', value: 'orange-6' },
+  { label: 'Grey', value: 'grey-6' }
+]
+
+/**
+ * Control point style
+ */
+const boxSettingsPointStyle = ref('Square')
+const pointOptions = ['Square', 'Round']
+const boxHasRoundedPoints = computed(() => boxSettingsPointStyle.value === 'Round')
 
 /**
  * Info used to draw new bounding boxes
@@ -276,5 +357,11 @@ function startResizing ({ event, position }: IResizeEvent) {
 .bounding-image {
   user-select: none;
   width: 1200px;
+}
+
+.settings {
+  &__controls {
+    max-width: 300px;
+  }
 }
 </style>

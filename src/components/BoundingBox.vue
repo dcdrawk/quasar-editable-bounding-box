@@ -45,11 +45,13 @@ interface Props {
   y: number
   edit?: boolean
   color?: string
+  rounded?: boolean
 }
 
 const props = withDefaults(defineProps<Props>(), {
   edit: false,
-  color: 'green-6'
+  color: 'green-6',
+  rounded: false
 })
 
 const flipX = computed(() => props.width < 0)
@@ -101,7 +103,8 @@ const resizeClass = computed(() => ({
 }))
 
 const resizeStyle = computed(() => ({
-  backgroundColor: colors.getPaletteColor(props.color)
+  backgroundColor: colors.getPaletteColor(props.color),
+  borderRadius: props.rounded ? '50%' : '0'
 }))
 
 /**
