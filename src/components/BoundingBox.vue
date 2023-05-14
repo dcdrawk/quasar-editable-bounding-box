@@ -18,7 +18,7 @@
         :key="index"
         class="bounding-box__resize"
         :class="[`bounding-box__resize--${point} `, resizeClass]"
-        :style="point"
+        :style="[resizeStyle]"
         @mousedown.stop.prevent="$emit('resize-start', { event: $event, position: point })"
         @touchstart.stop.prevent="$emit('resize-start', { event: $event, position: point })"
       />
@@ -44,10 +44,12 @@ interface Props {
   x: number
   y: number
   edit?: boolean
+  color?: string
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  edit: false
+  edit: false,
+  color: 'green-6'
 })
 
 const flipX = computed(() => props.width < 0)
@@ -70,16 +72,16 @@ const boundingBoxStyle = computed(() => ({
   width: `${dimensions.value.width}px`,
   height: `${dimensions.value.height}px`,
   transform: `translate(${props.x}px, ${props.y}px) scaleX(${dimensions.value.scaleX}) scaleY(${dimensions.value.scaleY})`,
-  outlineColor: 'orange'
+  outlineColor: colors.getPaletteColor(props.color)
 }))
 
 /**
  * Remove button style
  */
 const removeStyle = computed(() => ({
-  backgroundColor: colors.changeAlpha(colors.getPaletteColor('red-6'), 0.2),
-  color: colors.getPaletteColor('red-6'),
-  border: `2px solid ${colors.getPaletteColor('red-6')}`,
+  backgroundColor: colors.changeAlpha(colors.getPaletteColor(props.color), 0.2),
+  color: colors.getPaletteColor(props.color),
+  border: `2px solid ${colors.getPaletteColor(props.color)}`,
   left: flipX.value ? 'auto' : '-2px',
   right: flipX.value ? '-2px' : 'auto',
   top: flipY.value ? 'auto' : '-40px',
@@ -96,6 +98,10 @@ const removeStyle = computed(() => ({
  */
 const resizeClass = computed(() => ({
   'bounding-box__resize--visible': props.edit
+}))
+
+const resizeStyle = computed(() => ({
+  backgroundColor: colors.getPaletteColor(props.color)
 }))
 
 /**
@@ -132,7 +138,6 @@ const resizePoints = [
     position: absolute;
     width: 10px;
     height: 10px;
-    background-color: $red-6;
     transition: opacity 150ms ease;
     cursor: pointer;
 
