@@ -69,7 +69,8 @@ const dimensions = computed(() => ({
 const boundingBoxStyle = computed(() => ({
   width: `${dimensions.value.width}px`,
   height: `${dimensions.value.height}px`,
-  transform: `translate(${props.x}px, ${props.y}px) scaleX(${dimensions.value.scaleX}) scaleY(${dimensions.value.scaleY})`
+  transform: `translate(${props.x}px, ${props.y}px) scaleX(${dimensions.value.scaleX}) scaleY(${dimensions.value.scaleY})`,
+  outlineColor: 'orange'
 }))
 
 /**
@@ -79,8 +80,8 @@ const removeStyle = computed(() => ({
   backgroundColor: colors.changeAlpha(colors.getPaletteColor('red-6'), 0.2),
   color: colors.getPaletteColor('red-6'),
   border: `2px solid ${colors.getPaletteColor('red-6')}`,
-  left: flipX.value ? '-2px' : 'auto',
-  right: flipX.value ? 'auto' : '-2px',
+  left: flipX.value ? 'auto' : '-2px',
+  right: flipX.value ? '-2px' : 'auto',
   top: flipY.value ? 'auto' : '-40px',
   bottom: flipY.value ? '-40px' : 'auto',
   borderBottomRightRadius: flipY.value ? '4px' : '0',
