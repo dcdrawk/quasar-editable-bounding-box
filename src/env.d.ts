@@ -7,3 +7,8 @@ declare namespace NodeJS {
     VUE_ROUTER_BASE: string | undefined;
   }
 }
+
+export interface IResizeEvent {
+  event: MouseEvent | TouchEvent
+  position: string
+}
