@@ -2,13 +2,12 @@
   <div class="full-width q-pa-md">
     <div
       ref="control"
-      v-touch-pan.prevent.capture.mouse="handlePan"
       class="relative-position overflow-hidden"
-      @mousemove="handleMouseMove"
-      @mouseup="handleResizeEnd"
+      @mousedown.prevent="createBoundingBox"
+      @touchstart.prevent="createBoundingBox"
     >
       <q-img
-        class="bounding-image full-width"
+        class="bounding-image"
         :draggable="false"
         src="/img/example-james-webb-photo.jpg"
       />
@@ -16,33 +15,23 @@
       <!-- New Bounding Box -->
       <BoundingBox
         v-if="boundingBoxVisible"
+        key="new"
         :x="boundingBoxInfo.x"
         :y="boundingBoxInfo.y"
         :width="boundingBoxInfo.width"
         :height="boundingBoxInfo.height"
-      />
-
-      <!-- List of Bounding boxes-->
-      <BoundingBox
-        v-for="(box, index) in boundingBoxes"
-        :key="`${index}${box.x}{box.y}`"
-        :x="box.x"
-        :y="box.y"
-        :width="box.width"
-        :height="box.height"
-        :edit="box.isEditing"
-        @remove="removeBoundingBox(index)"
-        @resize-start="handleResize($event, box)"
-        @resize-end="handleResizeEnd"
+        @resize-start="startResizing"
+        @remove="boundingBoxVisible = false"
       />
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, toValue } from 'vue'
+import { ref, reactive, computed } from 'vue'
 import BoundingBox from './BoundingBox.vue'
 import { useMouse, useWindowScroll } from '@vueuse/core'
+import { IResizeEvent } from 'src/env'
 
 interface IBoundingBox {
   x: number
@@ -51,6 +40,7 @@ interface IBoundingBox {
   height: number
   isEditing: boolean
 }
+
 /**
  * Is the bounding box visible?
  */
@@ -67,6 +57,11 @@ const boundingBoxInfo = reactive<IBoundingBox>({
   isEditing: false
 })
 
+const startX = ref(0)
+const startY = ref(0)
+const endX = ref(0)
+const endY = ref(0)
+
 /**
  * Control container template ref
  */
@@ -78,10 +73,6 @@ const control = ref()
  */
 const { x: pointerX, y: pointerY } = useMouse()
 const { x: scrollX, y: scrollY } = useWindowScroll()
-const scrollYStart = ref(0)
-const scrollXStart = ref(0)
-const scrollXDiff = computed(() => scrollX.value - scrollXStart.value)
-const scrollYDiff = computed(() => scrollY.value - scrollYStart.value)
 
 /**
  * Pointer coordinates relative to control element
@@ -92,133 +83,192 @@ const relativePointerCoordinates = computed(() => {
   const box = control.value.getBoundingClientRect()
 
   return {
-    x: pointerX.value - box.left - scrollX.value + scrollXDiff.value,
-    y: pointerY.value - box.top - scrollY.value + scrollYDiff.value
+    x: pointerX.value - box.left - scrollX.value,
+    y: pointerY.value - box.top - scrollY.value
   }
 })
 
 /**
- * Set Scroll Start
- * @desc set the scroll position when starting a bounding box
- * @param x: number
- * @param y: number
+ * Get Event Name
  */
-function setScrollStart (x: number, y: number) {
-  scrollXStart.value = x
-  scrollYStart.value = y
+function getEventName (type: 'move' | 'end', event: MouseEvent | TouchEvent) {
+  return type === 'move'
+    ? (event as TouchEvent).touches ? 'touchmove' : 'mousemove'
+    : (event as TouchEvent).touches ? 'touchend' : 'mouseup'
 }
 
 /**
- * Handle Pan
- * @desc when the pan starts, set the x / y coordinates,
- * if the pan is final, reset the bounding box,
- * otherwise update with width / height of the box based on offset coordinates
+ * Create Bounding Box
+ * @desc create the bounding box, set the starting values,
+ * add event listeners depending on touch / mouse
+ * @param e: MouseEvent | TouchEvent
  */
-function handlePan ({ ...newInfo }) {
-  if (newInfo.isFirst) {
-    setScrollStart(scrollX.value, scrollY.value)
+function createBoundingBox (event: MouseEvent | TouchEvent) {
+  if (boundingBoxVisible.value) return
 
-    boundingBoxInfo.x = relativePointerCoordinates.value.x
-    boundingBoxInfo.y = relativePointerCoordinates.value.y
+  const moveEvent = getEventName('move', event)
+  const endEvent = getEventName('end', event)
+
+  // Requesting an animation frame fixes janky initial "jump" on touchscreens
+  requestAnimationFrame(() => {
+    startX.value = relativePointerCoordinates.value.x
+    startY.value = relativePointerCoordinates.value.y
+
+    document.addEventListener(moveEvent, drawBoundingBox)
+    document.addEventListener(endEvent, finishBoundingBox)
+  })
+}
+
+/**
+ * Draw Bounding Box
+ * @desc make the box visible, set the end values which will continue to update until finished
+ */
+function drawBoundingBox () {
+  if (!boundingBoxVisible.value) {
     boundingBoxVisible.value = true
-  } else if (newInfo.isFinal) {
-    pushBoundingBox(boundingBoxInfo)
-    boundingBoxVisible.value = false
-    boundingBoxInfo.width = 0
-    boundingBoxInfo.height = 0
-    setScrollStart(0, 0)
-  } else {
-    boundingBoxInfo.width = newInfo.offset.x + scrollXDiff.value
-    boundingBoxInfo.height = newInfo.offset.y + scrollYDiff.value
   }
+
+  endX.value = relativePointerCoordinates.value.x
+  endY.value = relativePointerCoordinates.value.y
+
+  updateBoundingBox()
 }
 
-const boundingBoxes = ref<IBoundingBox[]>([])
-
-function pushBoundingBox (box: IBoundingBox) {
-  boundingBoxes.value.push({ ...box })
+/**
+ * Update Bounding Box
+ * @desc set bounding box values based on start / end values
+ */
+function updateBoundingBox () {
+  boundingBoxInfo.x = Math.min(startX.value, endX.value)
+  boundingBoxInfo.y = Math.min(startY.value, endY.value)
+  boundingBoxInfo.width = Math.abs(endX.value - startX.value)
+  boundingBoxInfo.height = Math.abs(endY.value - startY.value)
 }
 
-function removeBoundingBox (index: number) {
-  boundingBoxes.value.splice(index, 1)
+/**
+ * Use to track resize position
+ */
+const resizePosition = ref<string | null>(null)
+
+/**
+ * Finish Bounding Box
+ */
+function finishBoundingBox () {
+  // unset resizePosition
+  if (resizePosition.value) {
+    resizePosition.value = null
+  }
+
+  // unset isResizing
+  if (boundingBoxVisible.value) {
+    isResizing.value = false
+  }
+
+  document.removeEventListener('mousemove', drawBoundingBox)
+  document.removeEventListener('mouseup', finishBoundingBox)
+  document.removeEventListener('touchmove', drawBoundingBox)
 }
 
+/**
+ * Resize refs / computed
+ */
 const isResizing = ref(false)
-const resizePosition = ref('')
-const resizeBox = ref()
-const resizeDiffX = computed(() => resizeBox.value.x - relativePointerCoordinates.value.x)
-const resizeDiffY = computed(() => resizeBox.value.y - relativePointerCoordinates.value.y)
+const resizeDiffX = computed(() => boundingBoxInfo.x - relativePointerCoordinates.value.x)
+const resizeDiffY = computed(() => boundingBoxInfo.y - relativePointerCoordinates.value.y)
 
-function handleResize (position: unknown, box: IBoundingBox) {
-  isResizing.value = true
-  resizePosition.value = position as string
-  resizeBox.value = box
-  resizeBox.value.isEditing = true
-}
-
-function handleResizeEnd () {
-  isResizing.value = false
-  resizeBox.value.isEditing = false
-}
-
+/**
+ * Resize Left
+ * @desc set width and x values depending on pointer position
+ */
 function resizeLeft () {
-  resizeBox.value.width = resizeBox.value.width + resizeDiffX.value
-  resizeBox.value.x = relativePointerCoordinates.value.x
+  boundingBoxInfo.width = boundingBoxInfo.width + resizeDiffX.value
+  boundingBoxInfo.x = relativePointerCoordinates.value.x
 }
 
+/**
+ * Resize Left
+ * @desc set height and y values depending on pointer position
+ */
 function resizeTop () {
-  resizeBox.value.height = resizeBox.value.height + resizeDiffY.value
-  resizeBox.value.y = relativePointerCoordinates.value.y
+  boundingBoxInfo.height = boundingBoxInfo.height + resizeDiffY.value
+  boundingBoxInfo.y = relativePointerCoordinates.value.y
 }
 
+/**
+ * Resize Right
+ * @desc set width value depending on pointer position
+ */
 function resizeRight () {
-  resizeBox.value.width = relativePointerCoordinates.value.x - resizeBox.value.x
+  boundingBoxInfo.width = relativePointerCoordinates.value.x - boundingBoxInfo.x
 }
 
+/**
+ * Resize Right
+ * @desc set width value depending on pointer position
+ */
 function resizeBottom () {
-  resizeBox.value.height = relativePointerCoordinates.value.y - resizeBox.value.y
+  boundingBoxInfo.height = relativePointerCoordinates.value.y - boundingBoxInfo.y
 }
 
-function handleMouseMove () {
-  if (!isResizing.value) return
+/**
+ * Resize Bounding Box
+ * @desc handle resizing depending on which resize position is selected
+ */
+async function resizeBoundingBox () {
+  requestAnimationFrame(() => {
+    switch (resizePosition.value) {
+      case ('left'):
+        resizeLeft()
+        break
 
-  switch (resizePosition.value) {
-    case ('left'):
-      resizeLeft()
-      break
+      case ('top-left'):
+        resizeLeft()
+        resizeTop()
+        break
 
-    case ('top-left'):
-      resizeTop()
-      resizeLeft()
-      break
+      case ('top'):
+        resizeTop()
+        break
 
-    case ('top'):
-      resizeTop()
-      break
+      case ('top-right'):
+        resizeRight()
+        resizeTop()
+        break
 
-    case ('top-right'):
-      resizeTop()
-      resizeRight()
-      break
+      case ('right'):
+        resizeRight()
+        break
 
-    case ('right'):
-      resizeRight()
-      break
+      case ('bottom-right'):
+        resizeRight()
+        resizeBottom()
+        break
 
-    case ('bottom-right'):
-      resizeBottom()
-      resizeRight()
-      break
+      case ('bottom'):
+        resizeBottom()
+        break
 
-    case ('bottom'):
-      resizeBottom()
-      break
+      case ('bottom-left'):
+        resizeLeft()
+        resizeBottom()
+        break
+    }
+  })
+}
 
-    case ('bottom-left'):
-      resizeBottom()
-      resizeLeft()
-      break
-  }
+/**
+ * Start Resizing
+ * @desc handle resizing depending on which resize position is selected
+ */
+function startResizing ({ event, position }: IResizeEvent) {
+  isResizing.value = true
+  resizePosition.value = position
+
+  const moveEvent = getEventName('move', event)
+  const endEvent = getEventName('end', event)
+
+  document.addEventListener(moveEvent, resizeBoundingBox)
+  document.addEventListener(endEvent, finishBoundingBox)
 }
 </script>
 
