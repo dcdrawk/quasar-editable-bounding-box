@@ -2,14 +2,14 @@
   <section class="q-pa-md">
     <div class="flex row wrap justify-center">
       <!-- Settings -->
-      <div class="col col-xs-12">
+      <div class="col col-xs-12 col-sm-auto">
         <h6 class="q-my-sm">
           Bounding Box Settings
         </h6>
         <div class="image-box__settings flex row q-col-gutter-sm">
           <q-select
             v-model="boxSettingsColor"
-            class="q-mb-sm col-6"
+            class="q-mb-sm col-6 col-sm-4"
             filled
             :options="colorOptions"
             emit-value
@@ -40,16 +40,27 @@
 
           <q-select
             v-model="boxSettingsPointStyle"
-            class="q-mb-sm col-6"
+            class="q-mb-sm col-6 col-sm-4"
             filled
             :options="pointOptions"
             label="Point Style"
           />
+
+          <div class="q-mb-sm col-xs-12 col-sm-4">
+            <q-btn
+              class="full-width"
+              color="primary"
+              size="lg"
+              label="Reset"
+              :disabled="!boundingBoxVisible"
+              @click="reset"
+            />
+          </div>
         </div>
       </div>
 
       <!-- Instructions -->
-      <ul class="col">
+      <ul class="col col-grow">
         <li>
           Click and drag to create a bounding box.
         </li>
@@ -363,13 +374,22 @@ function startResizing ({ event, position }: IResizeEvent) {
   document.addEventListener(moveEvent, resizeBoundingBox)
   document.addEventListener(endEvent, finishBoundingBox)
 }
+
+/**
+ * Reset the bounding box and settings
+ */
+function reset () {
+  boundingBoxVisible.value = false
+  boxSettingsColor.value = 'red-6'
+  boxSettingsPointStyle.value = 'Square'
+}
 </script>
 
 <style scoped lang="scss">
 .image-box {
   &__settings {
     @media (min-width: $breakpoint-sm-min) {
-      max-width: 360px;
+      min-width: 400px;
     }
   }
 
