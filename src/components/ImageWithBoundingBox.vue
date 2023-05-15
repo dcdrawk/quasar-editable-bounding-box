@@ -1,22 +1,15 @@
 <template>
-  <div class="full-width q-pa-md">
-    <div>
-      <h6 class="q-my-sm">
-        Image with Bounding Box Example {{ boxHasRoundedPoints }}
-      </h6>
-      <p>
-        Click and drag to create a bounding box. Drag the control points to resize.
-        Only one box can exist at a time, remove a box with the 'X' to create a new one
-      </p>
-
-      <div class="settings">
+  <section class="q-pa-md">
+    <div class="flex row wrap justify-center">
+      <!-- Settings -->
+      <div class="col col-xs-12">
         <h6 class="q-my-sm">
           Bounding Box Settings
         </h6>
-        <div class="settings__controls">
+        <div class="bounding-box__settings flex row q-col-gutter-sm">
           <q-select
             v-model="boxSettingsColor"
-            class="q-mb-sm"
+            class="q-mb-sm col-6"
             filled
             :options="colorOptions"
             emit-value
@@ -47,15 +40,32 @@
 
           <q-select
             v-model="boxSettingsPointStyle"
-            class="q-mb-sm"
+            class="q-mb-sm col-6"
             filled
             :options="pointOptions"
             label="Point Style"
           />
         </div>
       </div>
+
+      <!-- Instructions -->
+      <ul class="col">
+        <li>
+          Click and drag to create a bounding box.
+        </li>
+        <li>
+          Drag the control points to resize.
+        </li>
+        <li>
+          Only one box can exist at a time.
+        </li>
+        <li>
+          Remove a box by clicking the 'X'.
+        </li>
+      </ul>
     </div>
 
+    <!-- Control -->
     <div
       ref="control"
       class="relative-position overflow-hidden"
@@ -63,12 +73,11 @@
       @touchstart.prevent="createBoundingBox"
     >
       <q-img
-        class="bounding-image"
+        class="bounding-box__image"
         :draggable="false"
         src="/img/example-james-webb-photo.jpg"
       />
 
-      <!-- New Bounding Box -->
       <BoundingBox
         v-if="boundingBoxVisible"
         key="new"
@@ -83,7 +92,7 @@
         @remove="boundingBoxVisible = false"
       />
     </div>
-  </div>
+  </section>
 </template>
 
 <script setup lang="ts">
@@ -137,7 +146,6 @@ const boundingBoxInfo = reactive<IBoundingBox>({
   height: 0,
   isEditing: false
 })
-
 const startX = ref(0)
 const startY = ref(0)
 const endX = ref(0)
@@ -171,6 +179,9 @@ const relativePointerCoordinates = computed(() => {
 
 /**
  * Get Event Name
+ * @desc return the name of the event, which depends on type and touch event
+ * @param type 'move' | 'end'
+ * @param event MouseEvent | TouchEvent
  */
 function getEventName (type: 'move' | 'end', event: MouseEvent | TouchEvent) {
   return type === 'move'
@@ -227,7 +238,7 @@ function updateBoundingBox () {
 }
 
 /**
- * Use to track resize position
+ * Use to track which resize point is selected
  */
 const resizePosition = ref<string | null>(null)
 
@@ -245,6 +256,7 @@ function finishBoundingBox () {
     isResizing.value = false
   }
 
+  // Clean up the event listeners
   document.removeEventListener('mousemove', drawBoundingBox)
   document.removeEventListener('mouseup', finishBoundingBox)
   document.removeEventListener('touchmove', drawBoundingBox)
@@ -267,7 +279,7 @@ function resizeLeft () {
 }
 
 /**
- * Resize Left
+ * Resize Top
  * @desc set height and y values depending on pointer position
  */
 function resizeTop () {
@@ -284,7 +296,7 @@ function resizeRight () {
 }
 
 /**
- * Resize Right
+ * Resize Bottom
  * @desc set width value depending on pointer position
  */
 function resizeBottom () {
@@ -354,14 +366,16 @@ function startResizing ({ event, position }: IResizeEvent) {
 </script>
 
 <style scoped lang="scss">
-.bounding-image {
-  user-select: none;
-  width: 1200px;
-}
+.bounding-box {
+  &__settings {
+    @media (min-width: $breakpoint-sm-min) {
+      max-width: 360px;
+    }
+  }
 
-.settings {
-  &__controls {
-    max-width: 300px;
+  &__image {
+    user-select: none;
+    max-width: 1000px;
   }
 }
 </style>
