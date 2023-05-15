@@ -86,7 +86,7 @@
       <q-img
         class="image-box__image"
         :draggable="false"
-        src="/img/example-james-webb-photo.jpg"
+        src="~assets/img/example-james-webb-photo.jpg"
       />
 
       <BoundingBox
