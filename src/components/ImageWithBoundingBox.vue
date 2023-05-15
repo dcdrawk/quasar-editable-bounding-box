@@ -6,7 +6,7 @@
         <h6 class="q-my-sm">
           Bounding Box Settings
         </h6>
-        <div class="bounding-box__settings flex row q-col-gutter-sm">
+        <div class="image-box__settings flex row q-col-gutter-sm">
           <q-select
             v-model="boxSettingsColor"
             class="q-mb-sm col-6"
@@ -68,12 +68,12 @@
     <!-- Control -->
     <div
       ref="control"
-      class="relative-position overflow-hidden"
+      class="image-box__control relative-position overflow-hidden"
       @mousedown.prevent="createBoundingBox"
       @touchstart.prevent="createBoundingBox"
     >
       <q-img
-        class="bounding-box__image"
+        class="image-box__image"
         :draggable="false"
         src="/img/example-james-webb-photo.jpg"
       />
@@ -366,16 +366,19 @@ function startResizing ({ event, position }: IResizeEvent) {
 </script>
 
 <style scoped lang="scss">
-.bounding-box {
+.image-box {
   &__settings {
     @media (min-width: $breakpoint-sm-min) {
       max-width: 360px;
     }
   }
 
+  &__control {
+    max-width: 1000px;
+  }
+
   &__image {
     user-select: none;
-    max-width: 1000px;
   }
 }
 </style>
