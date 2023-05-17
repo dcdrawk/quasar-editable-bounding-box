@@ -18,6 +18,7 @@
     </div>
     <div
       id="image-wrapper"
+      ref="wrapper"
       :style="{backgroundImage: `url(caterpillar.jpg)`}"
       @mousedown="startDrawingBox"
       @mousemove="changeBox"
@@ -72,9 +73,20 @@ export default {
         height: 0,
         width: 0
       },
+      wrapperWidth: 0,
       boxes: [],
       activeBoxIndex: null
     }
+  },
+
+  mounted () {
+    this.wrapperWidth = this.$refs.wrapper.offsetWidth
+
+    window.addEventListener('resize', this.handleResize)
+  },
+
+  beforeUnmount () {
+    window.removeEventListener('resize', this.handleResize)
   },
 
   methods: {
@@ -123,6 +135,26 @@ export default {
         return index !== i
       })
       this.activeBoxIndex = null
+    },
+
+    initResizeHandler () {
+      this.wrapperWidth = this.$refs.wrapper.offsetWidth
+
+      window.addEventListener('resize', this.handleResize)
+    },
+
+    handleResize () {
+      const wrapperWidth = this.$refs.wrapper.offsetWidth
+      const scaleFactor = wrapperWidth / this.wrapperWidth
+
+      this.boxes.forEach((box) => {
+        box.top = box.top * scaleFactor
+        box.left = box.left * scaleFactor
+        box.width = box.width * scaleFactor
+        box.height = box.height * scaleFactor
+      })
+
+      this.wrapperWidth = wrapperWidth
     }
   }
 }
