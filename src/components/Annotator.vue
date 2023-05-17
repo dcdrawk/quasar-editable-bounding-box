@@ -135,11 +135,17 @@ export default {
   -moz-osx-font-smoothing: grayscale;
   text-align: center;
   color: #2c3e50;
+  position: relative;
+  width: 100%;
+  height: calc(100vh - 50px);
 
   #image-wrapper {
-    height: 640px;
-    width: 640px;
+    max-height: 640px;
+    max-width: 640px;
+    width: 100%;
+    height: 100%;
     background-repeat: no-repeat;
+    background-size: contain;
     position: relative;
   }
 
