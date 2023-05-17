@@ -17,7 +17,7 @@
         top: (bTop - 18) +'px',
         left: (bLeft + bWidth) + 'px'
       }"
-      @click="removeMyself"
+      @click="removeBox"
     >
       x
     </a>

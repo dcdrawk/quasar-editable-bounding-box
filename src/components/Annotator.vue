@@ -39,16 +39,15 @@
         :b-width="box.width"
         :b-height="box.height"
         :b-active="i===activeBoxIndex"
-        :on-select="makeBoxActive"
-        :b-index="i"
-        :on-delete="removeBox"
+        @select="makeBoxActive(i)"
+        @remove="removeBox(i)"
       />
     </div>
   </div>
 </template>
 
 <script>
-import Box from './components/Box'
+import Box from 'src/components/Box.vue'
 import { pick } from 'lodash'
 
 const getCoursorLeft = (e) => {
