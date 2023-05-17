@@ -147,6 +147,8 @@ export default {
       const wrapperWidth = this.$refs.wrapper.offsetWidth
       const scaleFactor = wrapperWidth / this.wrapperWidth
 
+      if (scaleFactor === 1) return
+
       this.boxes.forEach((box) => {
         box.top = box.top * scaleFactor
         box.left = box.left * scaleFactor
