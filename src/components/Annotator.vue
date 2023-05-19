@@ -1,7 +1,7 @@
 <template>
   <div id="annotator">
     <div id="label-bar">
-      <h4>Your boxes {{ pointerX }} {{ relativePointerCoordinates }}</h4>
+      <h4>Your boxes {{ pointerX }} {{ activeBox }}</h4>
       <ul>
         <li
           v-for="(box, i) in boxes"
@@ -45,6 +45,7 @@
         :b-active="i===activeBoxIndex"
         @select="makeBoxActive(i)"
         @remove="removeBox(i)"
+        @resize="startResizing"
       />
     </div>
   </div>
@@ -55,6 +56,18 @@ import { computed, ref } from 'vue'
 import { useMouse, useWindowScroll } from '@vueuse/core'
 import Box from 'src/components/Box.vue'
 import { pick } from 'lodash'
+
+/**
+ * Get Event Name
+ * @desc return the name of the event, which depends on type and touch event
+ * @param type 'move' | 'end'
+ * @param event MouseEvent | TouchEvent
+ */
+function getEventName (type, event) {
+  return type === 'move'
+    ? event.touches ? 'touchmove' : 'mousemove'
+    : event.touches ? 'touchend' : 'mouseup'
+}
 
 export default {
   name: 'AppAnnotator',
@@ -103,22 +116,38 @@ export default {
       },
       wrapperWidth: 0,
       boxes: [],
-      activeBoxIndex: null
+      activeBoxIndex: null,
+      isResizing: false,
+      resizePosition: undefined
+    }
+  },
+
+  computed: {
+    activeBox () {
+      return this.boxes[this.activeBoxIndex]
+    },
+
+    resizeDiffX () {
+      return this.activeBox.left - this.relativePointerCoordinates.x
+    },
+
+    resizeDiffY () {
+      return this.activeBox.top - this.relativePointerCoordinates.y
     }
   },
 
   mounted () {
     this.wrapperWidth = this.$refs.wrapper.offsetWidth
 
-    window.addEventListener('resize', this.handleResize)
+    window.addEventListener('resize', this.handleWindowResize)
   },
 
   beforeUnmount () {
-    window.removeEventListener('resize', this.handleResize)
+    window.removeEventListener('resize', this.handleWindowResize)
   },
 
   methods: {
-    startDrawingBox (e) {
+    startDrawingBox () {
       requestAnimationFrame(() => {
         this.drawingBox = {
           width: 0,
@@ -130,7 +159,7 @@ export default {
       })
     },
 
-    changeBox (e) {
+    changeBox () {
       if (this.drawingBox.active) {
         requestAnimationFrame(() => {
           this.drawingBox = {
@@ -175,7 +204,7 @@ export default {
       window.addEventListener('resize', this.handleResize)
     },
 
-    handleResize () {
+    handleWindowResize () {
       const wrapperWidth = this.$refs.wrapper.offsetWidth
       const scaleFactor = wrapperWidth / this.wrapperWidth
 
@@ -189,6 +218,123 @@ export default {
       })
 
       this.wrapperWidth = wrapperWidth
+    },
+
+    /**
+     * Resize Left
+     * @desc set width and x values depending on pointer position
+     */
+    resizeLeft () {
+      this.activeBox.width = this.activeBox.width + this.resizeDiffX
+      this.activeBox.left = this.relativePointerCoordinates.x
+    },
+
+    /**
+     * Resize Top
+     * @desc set height and y values depending on pointer position
+     */
+    resizeTop () {
+      this.activeBox.height = this.activeBox.height + this.resizeDiffY
+      this.activeBox.top = this.relativePointerCoordinates.y
+    },
+
+    /**
+     * Resize Right
+     * @desc set width value depending on pointer position
+     */
+    resizeRight () {
+      this.activeBox.width = this.relativePointerCoordinates.x - this.activeBox.left
+    },
+
+    /**
+     * Resize Bottom
+     * @desc set width value depending on pointer position
+     */
+    resizeBottom () {
+      this.activeBox.height = this.relativePointerCoordinates.y - this.activeBox.top
+    },
+
+    /**
+     * Start Resizing
+     * @desc handle resizing depending on which resize position is selected
+     */
+    startResizing ({ event, position }) {
+      this.isResizing = true
+      this.resizePosition = position
+      console.log('start...')
+
+      const moveEvent = getEventName('move', event)
+      const endEvent = getEventName('end', event)
+
+      document.addEventListener(moveEvent, this.resizeBoundingBox)
+      document.addEventListener(endEvent, this.finishBoundingBox)
+    },
+
+    /**
+     * Resize Bounding Box
+     * @desc handle resizing depending on which resize position is selected
+     */
+    resizeBoundingBox () {
+      requestAnimationFrame(() => {
+        switch (this.resizePosition) {
+          case ('left'):
+            this.resizeLeft()
+            break
+
+          case ('top-left'):
+            this.resizeLeft()
+            this.resizeTop()
+            break
+
+          case ('top'):
+            this.resizeTop()
+            break
+
+          case ('top-right'):
+            this.resizeRight()
+            this.resizeTop()
+            break
+
+          case ('right'):
+            this.resizeRight()
+            break
+
+          case ('bottom-right'):
+            this.resizeRight()
+            this.resizeBottom()
+            break
+
+          case ('bottom'):
+            this.resizeBottom()
+            break
+
+          case ('bottom-left'):
+            this.resizeLeft()
+            this.resizeBottom()
+            break
+        }
+      })
+    },
+
+    /**
+     * Finish Bounding Box
+     */
+    finishBoundingBox () {
+      // unset resizePosition
+      if (this.resizePosition) {
+        this.resizePosition = undefined
+      }
+
+      // unset isResizing
+      if (this.drawingBox.active.value) {
+        this.isResizing = false
+      }
+
+      // Clean up the event listeners
+      document.removeEventListener('mousemove', this.drawBoundingBox)
+      document.removeEventListener('mouseup', this.finishBoundingBox)
+      document.removeEventListener('touchmove', this.drawBoundingBox)
+      document.removeEventListener('touchend', this.finishBoundingBox)
     }
   }
 }
