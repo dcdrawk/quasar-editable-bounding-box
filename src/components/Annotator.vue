@@ -92,8 +92,8 @@ export default {
       const box = wrapper.value.getBoundingClientRect()
 
       return {
-        x: pointerX.value - box.left - scrollX.value,
-        y: pointerY.value - box.top - scrollY.value
+        x: Math.max(0, Math.min(pointerX.value - box.left - scrollX.value, box.width)),
+        y: Math.max(0, Math.min(pointerY.value - box.top - scrollY.value, box.height))
       }
     })
 
@@ -269,7 +269,6 @@ export default {
     startResizing ({ event, position }) {
       this.isResizing = true
       this.resizePosition = position
-      console.log('start...')
 
       const moveEvent = getEventName('move', event)
       const endEvent = getEventName('end', event)
@@ -366,7 +365,10 @@ export default {
     height: 100%;
     background-repeat: no-repeat;
     background-size: contain;
+    background-position: center;
     position: relative;
+    border: 1px solid salmon;
+    overflow: hidden;
   }
 
   #label-bar {
