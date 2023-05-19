@@ -155,6 +155,7 @@ export default {
   cursor: pointer;
   font-size: 24px;
   font-weight: bold;
+  user-select: none;
 }
 
 .resize-handle {
