@@ -14,8 +14,8 @@
       v-if="bActive"
       class="box-delete"
       :style="{
-        top: (bTop - 18) +'px',
-        left: (bLeft + bWidth) + 'px'
+        top: (bTop - 20) +'px',
+        left: (bLeft + bWidth + 5) + 'px'
       }"
       @click="$emit('remove')"
     >
@@ -30,6 +30,7 @@
         height: bHeight + 'px'
       }"
       :class="{'active': bActive}"
+      @mousedown.stop.prevent="$emit('select')"
       @touchstart.stop.prevent="$emit('select')"
     >
       <!-- @mousedown.stop.prevent="$emit('select')" -->
@@ -40,7 +41,9 @@
         :class="[`resize-handle--${point} `, resizeClass]"
         @mousedown.stop.prevent="handleResize($event, point)"
         @touchstart.stop.prevent="handleResize($event, point)"
-      />
+      >
+        <span class="resize-point" />
+      </div>
     </div>
   </div>
 </template>
@@ -156,11 +159,11 @@ export default {
 
 .resize-handle {
   position: absolute;
-  width: 10px;
-  height: 10px;
+  width: 20px;
+  height: 20px;
+  padding: 5px;
   transition: opacity 150ms ease;
   cursor: pointer;
-  background-color: #90ee90;
   opacity: 0;
   pointer-events: none;
 
@@ -169,7 +172,7 @@ export default {
     pointer-events: auto;
   }
 
-  $transformDistance: -5px;
+  $transformDistance: -10px;
 
   &--top-left {
     top: $transformDistance;
@@ -214,5 +217,12 @@ export default {
     left: $transformDistance;
     transform: translateY(-50%);
   }
+}
+
+.resize-point {
+  display: block;
+  width: 10px;
+  height: 10px;
+  background-color: #90ee90;
 }
 </style>

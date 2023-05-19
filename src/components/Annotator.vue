@@ -1,7 +1,7 @@
 <template>
   <div id="annotator">
     <div id="label-bar">
-      <h4>Your boxes {{ pointerX }} {{ activeBox }}</h4>
+      <h4>Your boxes</h4>
       <ul>
         <li
           v-for="(box, i) in boxes"
@@ -28,7 +28,7 @@
       @touchend="stopDrawingBox"
     >
       <Box
-        v-if="drawingBox.active"
+        v-if="drawingBoxVisible"
         :b-width="drawingBox.width"
         :b-height="drawingBox.height"
         :b-top="drawingBox.top"
@@ -123,6 +123,10 @@ export default {
   },
 
   computed: {
+    drawingBoxVisible () {
+      return this.drawingBox.active && (this.drawingBox.width > 0 || this.drawingBox.height > 0)
+    },
+
     activeBox () {
       return this.boxes[this.activeBoxIndex]
     },
