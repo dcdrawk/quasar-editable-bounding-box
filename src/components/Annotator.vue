@@ -21,8 +21,11 @@
       ref="wrapper"
       :style="{backgroundImage: `url(caterpillar.jpg)`}"
       @mousedown="startDrawingBox"
+      @touchstart="startDrawingBox"
       @mousemove="changeBox"
+      @touchmove="changeBox"
       @mouseup="stopDrawingBox"
+      @touchend="stopDrawingBox"
     >
       <Box
         v-if="drawingBox.active"
@@ -116,22 +119,26 @@ export default {
 
   methods: {
     startDrawingBox (e) {
-      this.drawingBox = {
-        width: 0,
-        height: 0,
-        top: this.relativePointerCoordinates.y,
-        left: this.relativePointerCoordinates.x,
-        active: true
-      }
+      requestAnimationFrame(() => {
+        this.drawingBox = {
+          width: 0,
+          height: 0,
+          top: this.relativePointerCoordinates.y,
+          left: this.relativePointerCoordinates.x,
+          active: true
+        }
+      })
     },
 
     changeBox (e) {
       if (this.drawingBox.active) {
-        this.drawingBox = {
-          ...this.drawingBox,
-          width: this.relativePointerCoordinates.x - this.drawingBox.left,
-          height: this.relativePointerCoordinates.y - this.drawingBox.top
-        }
+        requestAnimationFrame(() => {
+          this.drawingBox = {
+            ...this.drawingBox,
+            width: this.relativePointerCoordinates.x - this.drawingBox.left,
+            height: this.relativePointerCoordinates.y - this.drawingBox.top
+          }
+        })
       }
     },
 
