@@ -364,11 +364,10 @@ export default {
     width: 100%;
     height: 100%;
     background-repeat: no-repeat;
-    background-size: contain;
-    background-position: center;
+    background-size: 100%;
     position: relative;
     border: 1px solid salmon;
-    overflow: hidden;
+    background-color: #fff;
   }
 
   #label-bar {
