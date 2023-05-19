@@ -17,7 +17,7 @@
         top: (bTop - 18) +'px',
         left: (bLeft + bWidth) + 'px'
       }"
-      @click="removeBox"
+      @click="$emit('remove')"
     >
       x
     </a>
@@ -30,23 +30,22 @@
         height: bHeight + 'px'
       }"
       :class="{'active': bActive}"
-      @mousedown="selectBox"
+      @touchstart.stop.prevent="$emit('select')"
     >
+      <!-- @mousedown.stop.prevent="$emit('select')" -->
       <div
         v-for="(point, index) in resizePoints"
         :key="index"
         class="resize-handle"
         :class="[`resize-handle--${point} `, resizeClass]"
-        @mousedown.stop.prevent="$emit('resize', { event: $event, position: point })"
-        @touchstart.stop.prevent="$emit('resize', { event: $event, position: point })"
+        @mousedown.stop.prevent="handleResize($event, point)"
+        @touchstart.stop.prevent="handleResize($event, point)"
       />
     </div>
   </div>
 </template>
 
 <script>
-import { colors } from 'quasar'
-
 export default {
   name: 'AppBox',
 
@@ -114,12 +113,10 @@ export default {
   },
 
   methods: {
-    selectBox () {
-      this.$emit('select')
-    },
+    handleResize ($event, position) {
+      if (!this.bActive) return
 
-    removeBox () {
-      this.$emit('remove')
+      this.$emit('resize', { event: $event, position })
     }
   }
 }
@@ -129,10 +126,12 @@ export default {
 .box {
   position: absolute;
   border: 2px #90ee90 solid;
+  cursor: pointer;
+  z-index: 3;
+
   &:hover, &.active {
     background-color: rgba(144, 238, 144, .2);
   }
-  z-index: 3;
 }
 
 .label {
@@ -163,9 +162,11 @@ export default {
   cursor: pointer;
   background-color: #90ee90;
   opacity: 0;
+  pointer-events: none;
 
   &--visible {
     opacity: 1;
+    pointer-events: auto;
   }
 
   $transformDistance: -5px;
