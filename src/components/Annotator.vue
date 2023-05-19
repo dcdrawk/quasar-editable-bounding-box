@@ -1,7 +1,7 @@
 <template>
   <div id="annotator">
     <div id="label-bar">
-      <h4>Your boxes</h4>
+      <h4>Your boxes {{ pointerX }} {{ relativePointerCoordinates }}</h4>
       <ul>
         <li
           v-for="(box, i) in boxes"
@@ -48,23 +48,48 @@
 </template>
 
 <script>
+import { computed, ref } from 'vue'
+import { useMouse, useWindowScroll } from '@vueuse/core'
 import Box from 'src/components/Box.vue'
 import { pick } from 'lodash'
-
-const getCoursorLeft = (e) => {
-  return e.pageX - 10
-}
-
-const getCoursorTop = (e) => {
-  return e.pageY - 10
-}
 
 export default {
   name: 'AppAnnotator',
 
   components: { Box },
 
-  data: function () {
+  setup () {
+    const wrapper = ref(null)
+    /**
+     * Pointer and Scroll Coordinates
+     * See: https://vueuse.org/core/useMouse/
+     */
+    const { x: pointerX, y: pointerY } = useMouse()
+    const { x: scrollX, y: scrollY } = useWindowScroll()
+
+    /**
+     * Pointer coordinates relative to control element
+     */
+    const relativePointerCoordinates = computed(() => {
+      if (!wrapper.value) return { x: 0, y: 0 }
+
+      const box = wrapper.value.getBoundingClientRect()
+
+      return {
+        x: pointerX.value - box.left - scrollX.value,
+        y: pointerY.value - box.top - scrollY.value
+      }
+    })
+
+    return {
+      pointerX,
+      pointerY,
+      relativePointerCoordinates,
+      wrapper
+    }
+  },
+
+  data () {
     return {
       drawingBox: {
         active: false,
@@ -94,8 +119,8 @@ export default {
       this.drawingBox = {
         width: 0,
         height: 0,
-        top: getCoursorTop(e),
-        left: getCoursorLeft(e),
+        top: this.relativePointerCoordinates.y,
+        left: this.relativePointerCoordinates.x,
         active: true
       }
     },
@@ -104,8 +129,8 @@ export default {
       if (this.drawingBox.active) {
         this.drawingBox = {
           ...this.drawingBox,
-          width: getCoursorLeft(e) - this.drawingBox.left,
-          height: getCoursorTop(e) - this.drawingBox.top
+          width: this.relativePointerCoordinates.x - this.drawingBox.left,
+          height: this.relativePointerCoordinates.y - this.drawingBox.top
         }
       }
     },
