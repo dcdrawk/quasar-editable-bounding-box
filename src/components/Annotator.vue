@@ -225,8 +225,10 @@ export default {
      * @desc set width and x values depending on pointer position
      */
     resizeLeft () {
-      this.activeBox.width = this.activeBox.width + this.resizeDiffX
-      this.activeBox.left = this.relativePointerCoordinates.x
+      const maxLeft = this.activeBox.width + this.activeBox.left
+
+      this.activeBox.width = Math.max(this.activeBox.width + this.resizeDiffX, 0)
+      this.activeBox.left = Math.min(this.relativePointerCoordinates.x, maxLeft)
     },
 
     /**
@@ -234,8 +236,10 @@ export default {
      * @desc set height and y values depending on pointer position
      */
     resizeTop () {
-      this.activeBox.height = this.activeBox.height + this.resizeDiffY
-      this.activeBox.top = this.relativePointerCoordinates.y
+      const maxTop = this.activeBox.height + this.activeBox.top
+
+      this.activeBox.height = Math.max(this.activeBox.height + this.resizeDiffY, 0)
+      this.activeBox.top = Math.min(this.relativePointerCoordinates.y, maxTop)
     },
 
     /**
@@ -243,7 +247,7 @@ export default {
      * @desc set width value depending on pointer position
      */
     resizeRight () {
-      this.activeBox.width = this.relativePointerCoordinates.x - this.activeBox.left
+      this.activeBox.width = Math.max(this.relativePointerCoordinates.x - this.activeBox.left, 0)
     },
 
     /**
@@ -251,7 +255,7 @@ export default {
      * @desc set width value depending on pointer position
      */
     resizeBottom () {
-      this.activeBox.height = this.relativePointerCoordinates.y - this.activeBox.top
+      this.activeBox.height = Math.max(this.relativePointerCoordinates.y - this.activeBox.top, 0)
     },
 
     /**
