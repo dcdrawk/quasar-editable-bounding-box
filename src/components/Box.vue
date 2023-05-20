@@ -30,8 +30,8 @@
         height: bHeight + 'px'
       }"
       :class="{'active': bActive}"
-      @mousedown.stop.prevent="$emit('select')"
-      @touchstart.stop.prevent="$emit('select')"
+      @mousedown.stop.prevent="$emit('select', $event)"
+      @touchstart.stop.prevent="$emit('select', $event)"
     >
       <!-- @mousedown.stop.prevent="$emit('select')" -->
       <div

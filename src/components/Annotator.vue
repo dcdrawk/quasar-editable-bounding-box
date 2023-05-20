@@ -43,7 +43,7 @@
         :b-width="box.width"
         :b-height="box.height"
         :b-active="i===activeBoxIndex"
-        @select="makeBoxActive(i)"
+        @select="handleSelectBox($event, i)"
         @remove="removeBox(i)"
         @resize="startResizing"
       />
@@ -118,7 +118,11 @@ export default {
       boxes: [],
       activeBoxIndex: null,
       isResizing: false,
-      resizePosition: undefined
+      resizePosition: undefined,
+      startDragX: 0,
+      startDragY: 0,
+      dragStart: false,
+      dragging: false
     }
   },
 
@@ -152,6 +156,8 @@ export default {
 
   methods: {
     startDrawingBox () {
+      if (this.dragStart) return
+
       requestAnimationFrame(() => {
         this.drawingBox = {
           width: 0,
@@ -164,7 +170,7 @@ export default {
     },
 
     changeBox () {
-      if (this.drawingBox.active) {
+      if (this.drawingBox.active && !this.dragStart) {
         requestAnimationFrame(() => {
           this.drawingBox = {
             ...this.drawingBox,
@@ -178,7 +184,7 @@ export default {
     stopDrawingBox () {
       if (this.drawingBox.active) {
         if (this.drawingBox.width > 5) {
-          this.boxes.push({ ...pick(this.drawingBox, ['width', 'height', 'top', 'left']) })
+          this.boxes.push({ dragging: false, ...pick(this.drawingBox, ['width', 'height', 'top', 'left']) })
         }
 
         this.drawingBox = {
@@ -191,8 +197,52 @@ export default {
       }
     },
 
+    async handleSelectBox (event, i) {
+      this.makeBoxActive(i)
+      this.dragStart = true
+
+      if (event.touches) {
+        document.addEventListener('touchmove', this.handleDrag)
+        document.addEventListener('touchend', this.stopDrag)
+      } else {
+        document.addEventListener('mousemove', this.handleDrag)
+        document.addEventListener('mouseup', this.stopDrag)
+      }
+    },
+
     makeBoxActive (i) {
       this.activeBoxIndex = i
+    },
+
+    handleDrag () {
+      requestAnimationFrame(() => {
+        if (!this.dragStart) return
+
+        if (!this.dragging) {
+          this.startDragX = this.relativePointerCoordinates.x
+          this.startDragY = this.relativePointerCoordinates.y
+          this.dragging = true
+        }
+
+        const deltaX = this.relativePointerCoordinates.x - this.startDragX
+        const deltaY = this.relativePointerCoordinates.y - this.startDragY
+
+        this.activeBox.left += deltaX
+        this.activeBox.top += deltaY
+
+        this.startDragX = this.relativePointerCoordinates.x
+        this.startDragY = this.relativePointerCoordinates.y
+      })
+    },
+
+    stopDrag () {
+      this.dragging = false
+      this.dragStart = false
+
+      document.removeEventListener('mousemove', this.handleDrag)
+      document.removeEventListener('mouseup', this.stopDrag)
+      document.removeEventListener('touchmove', this.handleDrag)
+      document.removeEventListener('touchend', this.stopDrag)
     },
 
     removeBox (i) {
@@ -365,9 +415,12 @@ export default {
     height: 100%;
     background-repeat: no-repeat;
     background-size: 100%;
-    position: relative;
+    position: absolute;
+    top: 0;
+    left: 0;
     border: 1px solid salmon;
     background-color: #fff;
+    overflow: hidden;
   }
 
   #label-bar {
